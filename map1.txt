@@ -1,0 +1,1 @@
+[item(player, 0, 0), item(wumpus, 0, 2), item(gold, 1, 2), item(pit, 2, 0), item(pit, 2, 2), item(pit, 3, 3)]
