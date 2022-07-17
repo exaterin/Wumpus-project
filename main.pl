@@ -33,14 +33,6 @@ items(W, I, F) :- maplist(list_coord(W), I, R), flatten(R, F).
 % Creates a list of items for a given map from file "map.txt"
 list_from_file(L) :- read_map(Map), world(Map, R), items(R, ["s", "w", "g", "p"], L), !.
 
-% Replaces element at the place N with  A
-replace_l([_|L],[A|L], A, 0).
-replace_l([X|L],[X|R], A, N) :- N1 #= N - 1, replace_l(L, R, A, N1).
-
-% Replaces element at the coordinats (X, Y) with A
-replace(World1, A, (X,Y), World2) :- X #= X1, Y #= 3 - Y1, 
-                            nth0(Y1, World1, NL), replace_l(NL,R,A,X1), replace_l(World1,World2,R,Y1).
-
 
 % ---------- MOVEMENTS ----------
 
