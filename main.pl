@@ -119,3 +119,4 @@ run(N, Solution) :- (read_map(Map), world(Map, R), items(N, R, ["s", "w", "g", "
                         coordinates(N, R, "g", (X, Y)),
                         write("Path:"), nl,
                         print_path(Reversed, (X,Y)) ; write("There is no solution :(")), !.
+                        
