@@ -40,14 +40,32 @@ list_from_file(N, L) :- read_map(Map), world(Map, R), items(N, R, ["s", "w", "g"
 pos_player(M, X, Y) :- head(M, item(player, X, Y)).
 
 
-% Prints Solution
-print_path([], _) :- write("Player climbs out of the cave!"), nl.
+% Prints a path
 
-print_path([H | T], (XG, YG)) :- (head(H, H1), H1 = item(player, X, Y), X = XG, Y = YG, write("Player grabs the gold at "), 
-                        write("("), write((X, Y)), write(") "), write("-> "), print_path(T, (XG, YG)));
-                        (head(H, H1), H1 = item(player, X, Y), write("("), write((X, Y)), write(") "), write("-> "), 
-                        print_path(T, (XG, YG))), !.
+print_path(L1, N) :- sleep(0.5), L1 = [L | []], create_map(L, N, N, R), print_map(R), nl, write("Player climbs out from the cave "), nl, nl.
 
+print_path(P, N) :- sleep(0.5), P = [H |T], T = [T1 | _], create_map(H, N, N, R), print_map(R), nl,
+                ( (member(item(gold, X1, Y1), H), member(item(player, X1, Y1), T1), 
+                        write("Player grabs a gold "), nl, nl, print_path(T, N));
+                  (member(item(wumpus, X1, Y1), H), member(item(player, X1, Y1), T1), 
+                        write("Player kills Wumpus "), nl, nl, print_path(T, N));
+                  print_path(T, N)).
+
+                % ), print_path(T, N), !.
+
+% Creates a map from the given list  
+
+create_list(_, 0, _, _).
+create_list(L, N, X, R) :- length(R, N), N1 #= N - 1, (
+                (member(item(player, N1, X), L), R = ["s" | T]);
+                (member(item(wumpus, N1, X), L), R = ["w" | T]);
+                (member(item(gold, N1, X), L), R = ["g" | T]);
+                (member(item(pit, N1, X), L), R = ["p" | T]);
+                (\+member(item(player, N1, X), L), R = ["." | T])
+                ), create_list(L, N1, X, T), !.
+
+create_map(_, 0, _, R) :- length(R, 0), !.
+create_map(M, X, Y, R) :- X1 #= X - 1, create_list(M, Y, X1, R1), reverse(R1, R11), R = [ R11 | R2], create_map(M, X1, Y, R2).
 
 % ---------- MOVEMENTS ----------
 
@@ -56,9 +74,8 @@ move_player(WorldStart, N, DX, DY, WorldResult) :-
             select(item(player, X, Y), WorldStart, World),
             X1 #= X + DX, Y1 #= Y + DY,
             X1 #< N, Y1 #< N, X1 #>= 0, Y1 #>= 0,
-            \+ member(item(wumpus, X1, Y1), World),
             \+ member(item(pit, X1, Y1), World),
-            subtract(World, [item(gold, X1, Y1)], W1),
+            subtract(World, [item(gold, X1, Y1), item(wumpus, X1, Y1)], W1),
             WorldResult = [item(player, X1, Y1) | W1].
 
 % ---------- SEARCHING ----------
@@ -96,8 +113,8 @@ print_list(List) :- List = [X | T], write(X), write(" "), print_list(T).
 print_map(Lists) :- maplist(print_list, Lists).
 
 % Read a map from a file: "map.txt"
-read_map(Map):- 
-                open("map.txt", read, Str), 
+read_m(List, File):- 
+                open(File, read, Str), 
                 read_map(Str, Map), 
                 close(Str), 
                 write("Game will be played on a map:"), nl,
@@ -113,10 +130,9 @@ read_map(Stream, [X | L]):-
 
 % ---------- MAIN ----------
 
-% N is a length of map
-run(N, Solution) :- (read_map(Map), world(Map, R), items(N, R, ["s", "w", "g", "p"], L), bfs(N,[[L]], [L], Solution), 
-                        reverse(Solution, Reversed),
-                        coordinates(N, R, "g", (X, Y)),
+% F is a name of file with a map
+run(F) :- (read_m(R, F), length(R, N), items(N, R, ["s", "w", "g", "p"], L), bfs(N,[[L]], [L], Solution), 
+                        reverse(Solution, Reversed), sleep(1),
                         write("Path:"), nl,
-                        print_path(Reversed, (X,Y)) ; write("There is no solution :(")), !.
+                        print_path(Reversed, N) ; write("There is no solution :(")), !.
                         
